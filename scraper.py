@@ -9,36 +9,39 @@ SOURCES = {
 }
 
 def check_status():
-    results = [] # We need this to store the data
-    
+    results = []
+    headers = {'User-Agent': 'Mozilla/5.0'} # Pretend to be a browser
+
     for county, url in SOURCES.items():
         try:
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, headers=headers, timeout=10)
             soup = BeautifulSoup(response.text, 'html.parser')
             
-     if "Montgomery" in county:
-        # 1. Try to find the common emergency alert containers
-        # MCPS frequently uses 'emergency-msg' or a banner at the top
-        alert = soup.find('div', class_='emergency-msg') or soup.find('div', id='emergency-status')
-    
-        if alert:
-            status = alert.get_text(strip=True)
-        else:
-            # 2. Backup: Look for specific keywords in the whole page text
-            # (This catches it even if they change the ID name)
-            page_text = soup.get_text().lower()
-            if "code red" in page_text or "closed" in page_text:
-                status = "System Closed (Detected in Text)"
-            else:
-            status = "Green: Normal Operations"
-            elif "Howard" in county:
-                status_box = soup.find('h2') 
-                status_text = status_box.get_text(strip=True) if status_box else "No status found"
+            # Initial assumption
+            status = "Normal Operations"
 
-            results.append({"county": county, "status": status_text})
+            if "Montgomery" in county:
+                # 1. Look for the specific box
+                alert = soup.find('div', class_='emergency-msg') or soup.find('div', id='emergency-status')
+                if alert:
+                    status = alert.get_text(strip=True)
+                else:
+                    # 2. Safety Net: Search the whole page for keywords
+                    page_text = soup.get_text().lower()
+                    if "code red" in page_text or "closed" in page_text:
+                        status = "CLOSED (Detected in text)"
+
+            elif "Howard" in county:
+                # HCPSS uses <h2> for their status page headline
+                alert = soup.find('h2')
+                if alert:
+                    status = alert.get_text(strip=True)
+
+            # Ensure 'status' is always passed to results
+            results.append({"county": county, "status": status})
             
         except Exception as e:
-            results.append({"county": county, "status": "Error fetching data"})
+            results.append({"county": county, "status": f"Error: {str(e)}"})
 
     return results
 
