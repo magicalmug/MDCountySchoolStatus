@@ -28,7 +28,7 @@ def check_status():
                 else:
                     # 2. Safety Net: Search the whole page for keywords
                     page_text = soup.get_text().lower()
-                    if "code red" in page_text or "closed" in page_text:
+                    if "CODE RED" in page_text or "closed" in page_text:
                         status = "CLOSED (Detected in text)"
 
             elif "Howard" in county:
