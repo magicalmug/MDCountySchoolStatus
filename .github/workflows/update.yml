@@ -4,6 +4,9 @@ on:
     - cron: '*/15 * * * *' # Runs every 15 minutes
   workflow_dispatch:      # Allows you to click a button to run it manually
 
+permissions:
+  contents: write
+  
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
