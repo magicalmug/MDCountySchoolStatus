@@ -16,9 +16,21 @@ def check_status():
             response = requests.get(url, timeout=10)
             soup = BeautifulSoup(response.text, 'html.parser')
             
-            if "Montgomery" in county:
-                status_box = soup.find('div', id='emergency-status')
-                status_text = status_box.get_text(strip=True) if status_box else "Check site manually"
+     if "Montgomery" in county:
+        # 1. Try to find the common emergency alert containers
+        # MCPS frequently uses 'emergency-msg' or a banner at the top
+        alert = soup.find('div', class_='emergency-msg') or soup.find('div', id='emergency-status')
+    
+        if alert:
+            status = alert.get_text(strip=True)
+        else:
+            # 2. Backup: Look for specific keywords in the whole page text
+            # (This catches it even if they change the ID name)
+            page_text = soup.get_text().lower()
+            if "code red" in page_text or "closed" in page_text:
+                status = "System Closed (Detected in Text)"
+            else:
+            status = "Green: Normal Operations"
             elif "Howard" in county:
                 status_box = soup.find('h2') 
                 status_text = status_box.get_text(strip=True) if status_box else "No status found"
